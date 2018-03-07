@@ -3,11 +3,13 @@ import functools
 import inspect
 import os
 import sys
+import warnings
 
 import matplotlib as mpl
+from matplotlib.cbook import dedent
 import six
 
-from legacycontour.contour import LegacyContourSet
+from legacycontour.contourset import LegacyContourSet
 
 # Get the version from the _version.py versioneer file. For a git checkout,
 # this is computed based on the number of commits since the last tag.
@@ -17,6 +19,22 @@ del get_versions
 
 # This is the minimum numpy version supported
 __version__numpy__ = str('1.7.1')  # minimum required numpy version
+
+__all__ = ['contour', 'contourf']
+
+
+# Copied over from the v2.1.2 matplotlib/cbook/__init__.py
+def _sanitize_sequence(data):
+    """Converts dictview object to list"""
+    import collections
+    return list(data) if isinstance(data, collections.MappingView) else data
+
+
+def _get_label(y, default_name):
+    try:
+        return y.name
+    except AttributeError:
+        return default_name
 
 
 # Copied over from the v2.1.2 matplotlib/__init__.py
@@ -29,7 +47,7 @@ def _replacer(data, key):
         return (key)
     # try to use __getitem__
     try:
-        return sanitize_sequence(data[key])
+        return _sanitize_sequence(data[key])
     # key does not exist, silently fall back to key
     except KeyError:
         return key
@@ -224,7 +242,7 @@ def _preprocess_data(replace_names=None, replace_all_args=False,
             data = kwargs.pop('data', None)
 
             if data is None:  # data validation
-                args = tuple(sanitize_sequence(a) for a in args)
+                args = tuple(_sanitize_sequence(a) for a in args)
             else:
                 if arg_names_at_runtime:
                     # update the information about replace names and
@@ -280,9 +298,9 @@ def _preprocess_data(replace_names=None, replace_all_args=False,
             )
             if (label_namer and not user_supplied_label):
                 if _label_namer_pos < len(args):
-                    kwargs['label'] = get_label(args[_label_namer_pos], label)
+                    kwargs['label'] = _get_label(args[_label_namer_pos], label)
                 elif label_namer in kwargs:
-                    kwargs['label'] = get_label(kwargs[label_namer], label)
+                    kwargs['label'] = _get_label(kwargs[label_namer], label)
                 else:
                     import warnings
                     msg = ("Tried to set a label via parameter '%s' in "
@@ -341,7 +359,7 @@ def _legacy_hold(ax, kwargs):
         yield
     finally:
         if hasattr(ax, '_hold'):
-            ax._hold = self._tmp_hold
+            ax._hold = _tmp_hold
 
 
 @_preprocess_data()
@@ -351,7 +369,7 @@ def contour(ax, *args, **kwargs):
         contours = LegacyContourSet(ax, *args, **kwargs)
         ax.autoscale_view()
 
-    if contours._A is not None: ax.figure.sci(contours)
+    #if contours._A is not None: ax.figure.sci(contours)
     return contours
 contour.__doc__ = LegacyContourSet.contour_doc
 
@@ -362,7 +380,7 @@ def contourf(ax, *args, **kwargs):
         contours = LegacyContourSet(ax, *args, **kwargs)
         ax.autoscale_view()
 
-    if contours._A is not None: ax.figure.sci(contours)
+    #if contours._A is not None: ax.figure.sci(contours)
     return contours
 contourf.__doc__ = LegacyContourSet.contour_doc
 
