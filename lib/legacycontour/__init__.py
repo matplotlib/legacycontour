@@ -6,7 +6,7 @@ import sys
 import warnings
 
 import matplotlib as mpl
-from matplotlib.cbook import dedent
+from inspect import cleandoc as dedent
 import six
 
 from legacycontour.contourset import LegacyContourSet
